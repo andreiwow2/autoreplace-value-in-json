@@ -51,6 +51,10 @@ if ($folder) {
 						if ($product.PSObject.Properties.Name -contains 'lagerplatzBezeichnung') {
 							$product.lagerplatzBezeichnung = $product.lagerplatzBezeichnung -replace '-','/'
 						}
+
+      						if ($product.PSObject.Properties.Name -contains 'artikelNr') {
+						    $product.artikelNr = $product.artikelNr + '..'
+						}
 					}
 				}
 			}
