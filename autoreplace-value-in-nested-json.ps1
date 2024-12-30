@@ -53,7 +53,9 @@ if ($folder) {
 						}
 
       						if ($product.PSObject.Properties.Name -contains 'artikelNr') {
-						    $product.artikelNr = $product.artikelNr + '..'
+						    if (-not $product.artikelNr.EndsWith('..')) {
+			                                $product.artikelNr += '..'
+			                            }
 						}
 					}
 				}
