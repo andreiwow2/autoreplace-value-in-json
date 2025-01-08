@@ -1,39 +1,27 @@
+# Ensure the necessary assembly is loaded
+Add-Type -AssemblyName System.Windows.Forms
+
 function Get-FolderName {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-        [string]$Message = "Select a directory.",
+    # Create an OpenFileDialog object
+    $dialog = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+        InitialDirectory = [Environment]::GetFolderPath('Desktop')
+        CheckFileExists = $false
+        ValidateNames = $false
+        FileName = "Select Folder"
+    }
 
-        [string]$InitialDirectory = [System.Environment+SpecialFolder]::MyComputer,
-
-        [switch]$ShowNewFolderButton
-    )
-
-    $browserForFolderOptions = 0x00000041                                  # BIF_RETURNONLYFSDIRS -bor BIF_NEWDIALOGSTYLE
-    if (!$ShowNewFolderButton) { $browserForFolderOptions += 0x00000200 }  # BIF_NONEWFOLDERBUTTON
-
-    $browser = New-Object -ComObject Shell.Application
-    # To make the dialog topmost, you need to supply the Window handle of the current process
-    [intPtr]$handle = [System.Diagnostics.Process]::GetCurrentProcess().MainWindowHandle
-
-    # see: https://msdn.microsoft.com/en-us/library/windows/desktop/bb773205(v=vs.85).aspx
-    $folder = $browser.BrowseForFolder($handle, $Message, $browserForFolderOptions, $InitialDirectory)
-
-    $result = $null
-    if ($folder) { 
-        $result = $folder.Self.Path 
-    } 
-
-    # Release and remove the used Com object from memory
-    [System.Runtime.Interopservices.Marshal]::ReleaseComObject($browser) | Out-Null
-    [System.GC]::Collect()
-    [System.GC]::WaitForPendingFinalizers()
-
-
-    return $result
+    # Show the dialog
+    $result = $dialog.ShowDialog()
+    if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
+        # Get the folder part of the selected path
+        return ([System.IO.Path]::GetDirectoryName($dialog.FileName))
+    } else {
+        return $null
+    }
 }
 
 $folder = Get-FolderName
+
 if ($folder) { 
     Get-ChildItem -Path $folder -Filter *.json -Recurse -File | ForEach-Object {
         $filename = $_.FullName
